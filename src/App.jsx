@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { UploadCloud, FileSpreadsheet, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { UploadCloud, FileSpreadsheet, ArrowRight, CheckCircle2, FileText } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
 export default function LeitorGovernoApp() {
@@ -23,20 +23,12 @@ export default function LeitorGovernoApp() {
       const workbook = XLSX.read(data, { type: 'array' });
       const worksheet = workbook.Sheets[workbook.SheetNames[0]];
       
-      // Lê o Excel exatamente como ele é (matriz de linhas e colunas)
-      // defval: '' garante que células em branco não desalinhem as colunas
       const linhasExcel = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
 
-      // =========================================================
-      // A LÓGICA DE LINHA A LINHA:
-      // 1. O map() passa por cada linha e junta os dados com "|"
-      // 2. O join('\r\n') junta todas as linhas dando um "Enter" entre elas
-      // =========================================================
       const txtOutput = linhasExcel
-        .map(linha => linha.join('|')) // Ex: ColA|ColB|ColC
-        .join('\r\n');                  // Pula para a linha de baixo
+        .map(linha => linha.join('|'))
+        .join('\r\n');
 
-      // Gerando e forçando o Download do arquivo TXT
       if (txtOutput.trim().length > 0) {
         const blob = new Blob([txtOutput], { type: 'text/plain;charset=utf-8' });
         const url = URL.createObjectURL(blob);
@@ -52,7 +44,6 @@ export default function LeitorGovernoApp() {
       } else {
         alert("O arquivo parece estar vazio.");
       }
-
     } catch (error) {
       console.error("Erro ao processar a planilha:", error);
       alert("Houve um erro ao processar o arquivo.");
@@ -62,72 +53,98 @@ export default function LeitorGovernoApp() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4 font-sans">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
+    // Fundo escuro moderno
+    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 font-sans text-slate-200">
+      
+      {/* Container principal com borda sutil e brilho (Glow) */}
+      <div className="max-w-lg w-full bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl shadow-indigo-500/10 p-10 relative overflow-hidden">
         
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">
-            Conversor Excel para TXT
+        {/* Efeito visual de luz no topo do card */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-1 bg-gradient-to-r from-transparent via-indigo-500 to-transparent opacity-50"></div>
+
+        {/* Cabeçalho */}
+        <div className="text-center mb-10 mt-2">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-indigo-500/10 mb-6 border border-indigo-500/20">
+            <FileText className="w-8 h-8 text-indigo-400" />
+          </div>
+          <h1 className="text-3xl font-extrabold tracking-tight text-white mb-3">
+            Transforma<span className="text-indigo-500">Excel</span>
           </h1>
-          <p className="text-sm text-gray-500">
-            Converte mantendo a estrutura exata (Linha = Linha)
+          <p className="text-slate-400 text-sm font-medium">
+            Arraste sua planilha e converta para TXT estruturado instantaneamente.
           </p>
         </div>
 
-        <div className="border-2 border-dashed border-blue-300 rounded-xl p-8 flex flex-col items-center justify-center bg-blue-50 hover:bg-blue-100 transition-colors cursor-pointer relative">
+        {/* Área de Drag & Drop */}
+        <div className="group relative border-2 border-dashed border-slate-700 hover:border-indigo-500 rounded-2xl p-10 flex flex-col items-center justify-center bg-slate-950/50 hover:bg-indigo-500/5 transition-all duration-300 cursor-pointer">
           <input 
             type="file" 
             accept=".xlsx, .xls, .csv" 
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
             onChange={handleFileSelect}
           />
           
           {arquivo ? (
-            <div className="flex flex-col items-center text-blue-600">
-              <FileSpreadsheet className="w-12 h-12 mb-3" />
-              <span className="font-semibold text-center">{arquivo.name}</span>
-              <span className="text-xs text-blue-400 mt-1">
-                {(arquivo.size / 1024).toFixed(1)} KB
+            <div className="flex flex-col items-center text-indigo-300 z-0">
+              <FileSpreadsheet className="w-14 h-14 mb-4 text-indigo-500 drop-shadow-[0_0_15px_rgba(99,102,241,0.5)]" />
+              <span className="font-semibold text-slate-200 text-center text-lg">{arquivo.name}</span>
+              <span className="text-xs text-slate-500 mt-2 font-mono uppercase tracking-wider">
+                {(arquivo.size / 1024).toFixed(1)} KB • Pronto para converter
               </span>
             </div>
           ) : (
-            <div className="flex flex-col items-center text-gray-500">
-              <UploadCloud className="w-12 h-12 mb-3 text-blue-500" />
-              <span className="font-medium text-center">Clique ou arraste a planilha aqui</span>
-              <span className="text-xs text-gray-400 mt-1">Suporta .XLSX e .CSV</span>
+            <div className="flex flex-col items-center text-slate-400 z-0 group-hover:text-indigo-300 transition-colors">
+              <UploadCloud className="w-14 h-14 mb-4 text-slate-500 group-hover:text-indigo-400 transition-colors" />
+              <span className="font-semibold text-center text-slate-300">Selecione ou arraste o arquivo</span>
+              <span className="text-xs text-slate-500 mt-2">Suporte para .XLSX e .CSV</span>
             </div>
           )}
         </div>
 
+        {/* Feedback de Sucesso */}
         {concluido && (
-          <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg text-center text-green-700 text-sm">
-            Sucesso! O arquivo TXT estruturado foi baixado.
+          <div className="mt-6 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center justify-center text-emerald-400 text-sm font-medium animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <CheckCircle2 className="w-5 h-5 mr-2" />
+            Download concluído com sucesso!
           </div>
         )}
 
-        <div className="mt-6">
+        {/* Botão de Ação Moderno */}
+        <div className="mt-8">
           <button 
             onClick={handleProcessar}
             disabled={!arquivo || processando}
-            className={`w-full font-bold py-3 px-4 rounded-xl flex items-center justify-center transition-all ${
+            className={`w-full font-bold py-4 px-6 rounded-xl flex items-center justify-center transition-all duration-300 ${
               !arquivo || processando 
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-                : 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-blue-500/30'
+                ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700' 
+                : 'bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white shadow-[0_0_20px_rgba(99,102,241,0.3)] hover:shadow-[0_0_25px_rgba(99,102,241,0.5)] hover:-translate-y-0.5'
             }`}
           >
             {processando ? (
-              <span className="animate-pulse">Processando dados...</span>
+              <span className="flex items-center">
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Processando arquivo...
+              </span>
             ) : concluido ? (
               <>
-                <CheckCircle2 className="w-5 h-5 mr-2" />
-                Processar Novo Arquivo
+                Processar Outro Arquivo <ArrowRight className="w-5 h-5 ml-2" />
               </>
             ) : (
               <>
-                Gerar TXT <ArrowRight className="w-5 h-5 ml-2" />
+                Gerar Arquivo TXT <ArrowRight className="w-5 h-5 ml-2" />
               </>
             )}
           </button>
+        </div>
+
+        {/* Rodapé sutil */}
+        <div className="mt-8 text-center">
+          <p className="text-xs text-slate-600 font-medium">
+            Processamento 100% local. Seus dados não são enviados para nenhum servidor.
+          </p>
         </div>
 
       </div>
